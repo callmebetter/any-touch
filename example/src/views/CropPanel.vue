@@ -1,56 +1,76 @@
 <template>
-    <canvas width="1000" height="800" class="crop-panel"></canvas>
+    <article class="crop-panel">
+        <img ref="crop" :src="source.url" style="width:100%;" />
+        <button @click="rotateTo">rotateTo</button>
+        <button @click="toDataURL">toDataURL</button>
+        <img v-if="previewURL" :src="previewURL" width="300" />
+    </article>
 </template>
 
 <script>
 import AnyTouch from '../../../packages/any-touch/dist/any-touch.umd';
+import loadImage from './loadImage';
+import Cropper from 'cropperjs';
+import 'cropperjs/dist/cropper.css';
 export default {
     name: 'CropPanel',
 
     props: {
-        img: {
-            type: Image
+        source: {
+            type: Object
+        },
+
+        crop: {
+            type: Object
+        },
+
+        scale: {
+            type: Number,
+            default: 1
+        },
+
+        org: {
+            type: Array,
+            default: () => [0, 0]
+        },
+
+        angle: {
+            type: Number,
+            default: 0
         }
     },
 
     data() {
         return {
-            context: null,
-            orgX: 0,
-            orgY: 0,
-            scale: 1,
-            roation: 0,
-            offsetX: 0,
-            offsetY: 0
+            cropper: null,
+            previewURL: ''
         };
     },
 
-    watch: {
-        img: {
-            immediate: true,
-            handler() {
-                console.log(123456);
-            }
-        }
-    },
+    watch: {},
 
     mounted() {
-        this.$el.width = this.img.width;
-        this.$el.height = this.img.height;
-        this.context = this.$el.getContext('2d');
-        this.context.drawImage(this.img, 0, 0);
-        this.drawRect();
-        // this.context.rect(50, 20, 200, 120);
-        // this.context.clip();
-        // this.context.fillRect(0, 0, 200, 120);
+        this.cropper = new Cropper(this.$refs.crop, {
+            dragMode: 'move',
+            aspectRatio: 426 / 269,
+            autoCropArea: 1,
+            preview: this.$refs.preview,
+            data: this.crop
+        });
     },
 
     methods: {
-        drawRect() {
-            this.context.save();
-            this.context.fillStyle = 'rgba(0,0,0,0.4)';
-            this.context.fillRect(0, 0, 300, 300);
-            this.context.restore();
+        toDataURL() {
+            this.previewURL = this.cropper.getCroppedCanvas().toDataURL('image/jpeg');
+            this.$emit('crop', { url: this.previewURL, ...this.cropper.getData() });
+        },
+
+        rotateTo() {
+            this.cropper.rotate(15);
+        },
+        drawBg() {
+            context.save();
+            context.restore();
         }
     }
 };
@@ -59,5 +79,8 @@ export default {
 <style scope lang="scss">
 .crop-panel {
     width: 100%;
+    height: 300px;
+    display: block;
+    margin: auto;
 }
 </style>

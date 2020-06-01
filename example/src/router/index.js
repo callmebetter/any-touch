@@ -26,7 +26,11 @@ const routes = [
         name: 'CropPanel',
         component: () => import('../views/CropPanel')
     },
-
+    {
+        path: '/test',
+        name: 'Test',
+        component: () => import('../views/Test')
+    },
     {
         path: '/topology',
         name: 'Topology',

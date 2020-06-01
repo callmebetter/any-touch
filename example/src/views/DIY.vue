@@ -1,26 +1,36 @@
 <template>
-    <article>
-        <ButtonLoadFile @loaded="onImageLoaded"></ButtonLoadFile>
-        <!-- <Sort :images="imgs"/> -->
-        <SlickList
-            class="preview"
-            v-model="imgs"
-            :pressDelay="200"
-            lockAxis="x"
-            axis="x"
-            helperClass="sort-active"
-        >
-            <SlickItem
-                class="preview__item"
-                v-for="(img,index) in imgs"
-                :index="index"
-                :key="index"
+    <main>
+        <article v-if="!isShowCrop">
+            <ButtonLoadFile @loaded="onImageLoaded"></ButtonLoadFile>
+            <SlickList
+                class="preview"
+                v-model="imgs"
+                :pressDelay="200"
+                lockAxis="x"
+                axis="x"
+                helperClass="sort-active"
             >
-                <img :src="img.crop.dataURL" width="100%" />
-            </SlickItem>
-        </SlickList>
-        <CropPanel v-if="imgs[0]" :img="imgs[0].source.img" ></CropPanel>
-    </article>
+                <SlickItem
+                    @click.native="onClickThumb(index)"
+                    class="preview__item"
+                    v-for="(img,index) in imgs"
+                    :index="index"
+                    :key="index"
+                >
+                    <img :src="img.crop.url" width="100%" />
+                </SlickItem>
+            </SlickList>
+        </article>
+
+        <!-- crop -->
+        <article v-else>
+            <CropPanel
+                :source="imgs[this.activeIndex].source"
+                :crop="imgs[this.activeIndex].crop"
+                @crop="onCrop"
+            ></CropPanel>
+        </article>
+    </main>
 </template>
 
 <script>
@@ -35,12 +45,20 @@ export default {
     components: { ButtonLoadFile, CropPanel, SlickList, SlickItem },
 
     data() {
-        return { imgs: [], list: ['x1', 'x2', 'x3', 'x4', 'x5'] };
+        return { imgs: [], activeIndex: -1,isShowCrop:false };
     },
 
     mounted() {},
 
     methods: {
+        onClickThumb(index) {
+            this.isShowCrop = true;
+            this.activeIndex = index;
+        },
+        onCrop(data) {
+            this.imgs[this.activeIndex].crop = {...this.imgs[this.activeIndex].crop, ...data};
+            this.isShowCrop = false;
+        },
         onImageLoaded(imgs) {
             this.imgs = imgs;
         }

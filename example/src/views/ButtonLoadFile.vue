@@ -8,6 +8,7 @@
 <script>
 // 114 72
 import AnyTouch from '../../../packages/any-touch/dist/any-touch.umd';
+import loadImage from './loadImage';
 export default {
     name: 'ButtonLoadFile',
 
@@ -35,10 +36,10 @@ export default {
                 const reader = new FileReader();
                 reader.readAsDataURL(file);
                 reader.onload = async (e) => {
-                    const img = await this.getImageSize(e.target.result);
+                    const img = await loadImage(e.target.result);
                     const { width, height } = img;
                     const crop = this.crop(img);
-                    resolve({ source: { dataURL: e.target.result,img, width, height }, crop });
+                    resolve({ source: { url: e.target.result, img, width, height }, crop });
                 };
 
                 reader.onerror = reject;
@@ -68,8 +69,10 @@ export default {
             let sourceHeight = height;
             let sourceY = 0;
             let sourceX = 0;
+            let cropAxis = 'x';
             // 以宽度为基准, 裁剪高度
             if (this.cropRate > rate) {
+                cropAxis = 'y';
                 sourceHeight = sourceWidth / this.cropRate;
                 sourceY = (height - sourceHeight) / 2;
             }
@@ -82,34 +85,20 @@ export default {
             // console.log({ sourceX, sourceY, sourceWidth, sourceHeight }, width, height);
             el.width = this.cropSize[0];
             el.height = this.cropSize[1];
-            context.drawImage(
-                img,
-                sourceX,
-                sourceY,
-                sourceWidth,
-                sourceHeight,
-                0,
-                0,
-                this.cropSize[0],
-                this.cropSize[1]
-            );
-            const dataURL = el.toDataURL();
-            return { dataURL, x: sourceX, y: sourceY, width: sourceWidth, height: sourceHeight };
+            const args = [img, sourceX, sourceY, sourceWidth, sourceHeight, 0, 0, this.cropSize[0], this.cropSize[1]];
+            context.drawImage(...args);
+            const url = el.toDataURL();
+            return {
+                url,
+                x: sourceX,
+                y: sourceY,
+                width: sourceWidth,
+                height: sourceHeight,
+                cropAxis,
+                cropRate: this.cropRate,
+                args
+            };
             // console.log(dataURL);
-        },
-
-        /**
-         * 获取图片尺寸
-         */
-        getImageSize(url) {
-            return new Promise((resolve, reject) => {
-                const img = new Image();
-                img.onload = (e) => {
-                    resolve(img);
-                };
-                img.onerror = reject;
-                img.src = url;
-            });
         }
     }
 };
